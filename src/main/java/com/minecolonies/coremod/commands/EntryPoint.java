@@ -56,6 +56,7 @@ public class EntryPoint
           .addNode(new CommandColonyInfo().build())
           .addNode(new CommandRSReset().build())
           .addNode(new CommandRSResetAll().build())
+          .addNode(new CommandResearch().build())
           .addNode(new CommandSetAbandoned().build())
           .addNode(new CommandExportColony().build());
 
