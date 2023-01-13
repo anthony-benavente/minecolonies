@@ -28,14 +28,13 @@ import static com.minecolonies.coremod.commands.CommandArgumentNames.COLONYID_AR
 
 public class CommandResearch implements IMCColonyOfficerCommand {
 
-    private static final String RESEARCHID_ARG = "resarchId";
+    private static final String RESEARCHID_ARG = "researchId";
     private static final String RESEARCH_COMMAND_ARG = "list|complete|cancel";
     private static final String ID_AND_TIME_TEXT = "%s (%s) ";
     private static final String RESEARCH_ENTRY_ID = "ID: ";
-    private static final String RESEARCH_ENTRY_TIME = " Time Left (est): ";
-    private static final String RESEARCHID_NOT_FOUND = "Failed to find in-progress research with the ID <%s>!";
+    private static final String RESEARCHID_NOT_FOUND = "Failed to find in-progress research with the ID: <%s>!";
     private static final String RESEARCH_COMPLETED = "Research progress set to max. Awaiting researcher for completion.";
-    private static final String EMPTY_IN_PROGRESS_RESEARCH = "There is no research in-progress for this colony.";
+    private static final String RESARCH_IN_PROGRESS_EMPTY = "There is no research in-progress for this colony.";
 
     @Override
     public int onExecute(CommandContext<CommandSourceStack> context)
@@ -124,7 +123,8 @@ public class CommandResearch implements IMCColonyOfficerCommand {
                             // set research progress to max. will complete when a researcher gets access to it
                             research.setProgress(IGlobalResearchTree.getInstance().getBranchData(branch).getBaseTime(depth));
                             context.getSource().sendSuccess(Component.literal(RESEARCH_COMPLETED), true);
-                        } else
+                        }
+                        else
                         {
                             colony.getResearchManager().getResearchTree().attemptResetResearch(player, colony, research);
                         }
@@ -159,16 +159,13 @@ public class CommandResearch implements IMCColonyOfficerCommand {
     {
         if (inProgress.size() == 0)
         {
-            context.getSource().sendSuccess(Component.literal(EMPTY_IN_PROGRESS_RESEARCH), true);
+            context.getSource().sendSuccess(Component.literal(RESARCH_IN_PROGRESS_EMPTY), true);
         }
         else
         {
             for (final ILocalResearch research : inProgress)
             {
                 final MutableComponent researchEntryId = Component.literal(RESEARCH_ENTRY_ID).withStyle(
-                        Style.EMPTY.withBold(true).withColor(ChatFormatting.GOLD)
-                );
-                final MutableComponent researchEntryTime = Component.literal(RESEARCH_ENTRY_TIME).withStyle(
                         Style.EMPTY.withBold(true).withColor(ChatFormatting.GOLD)
                 );
                 final double progressToGo = IGlobalResearchTree.getInstance().getBranchData(research.getBranch()).getBaseTime(research.getDepth()) - research.getProgress();
