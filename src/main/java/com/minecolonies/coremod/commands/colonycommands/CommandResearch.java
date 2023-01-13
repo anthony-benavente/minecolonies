@@ -35,6 +35,7 @@ public class CommandResearch implements IMCColonyOfficerCommand {
     private static final String RESEARCH_ENTRY_TIME = " Time Left (est): ";
     private static final String RESEARCHID_NOT_FOUND = "Failed to find in-progress research with the ID <%s>!";
     private static final String RESEARCH_COMPLETED = "Research progress set to max. Awaiting researcher for completion.";
+    private static final String EMPTY_IN_PROGRESS_RESEARCH = "There is no research in-progress for this colony.";
 
     @Override
     public int onExecute(CommandContext<CommandSourceStack> context)
@@ -92,12 +93,6 @@ public class CommandResearch implements IMCColonyOfficerCommand {
             // Only OP players can complete or cancel the colony research from the command line
             case "complete", "cancel" ->
             {
-                if (!context.getSource().hasPermission(OP_PERM_LEVEL))
-                {
-                    context.getSource().sendSuccess(Component.translatable(CommandTranslationConstants.COMMAND_REQUIRES_OP), true);
-                    return 0;
-                }
-
                 boolean foundResearch = false;
                 if (researchId.trim().equals(""))
                 {
@@ -116,6 +111,13 @@ public class CommandResearch implements IMCColonyOfficerCommand {
                         foundResearch = true;
                         if (researchCommand.equals("complete"))
                         {
+                            // Only OPs can complete research of colonies
+                            if (!context.getSource().hasPermission(OP_PERM_LEVEL))
+                            {
+                                context.getSource().sendSuccess(Component.translatable(CommandTranslationConstants.COMMAND_REQUIRES_OP), true);
+                                return 0;
+                            }
+
                             ResourceLocation branch = research.getBranch();
                             int depth = research.getDepth();
 
@@ -155,34 +157,41 @@ public class CommandResearch implements IMCColonyOfficerCommand {
      */
     private void printInProgressResearch(final CommandContext<CommandSourceStack> context, List<ILocalResearch> inProgress)
     {
-        for (final ILocalResearch research : inProgress)
+        if (inProgress.size() == 0)
         {
-            final MutableComponent researchEntryId = Component.literal(RESEARCH_ENTRY_ID).withStyle(
-                    Style.EMPTY.withBold(true).withColor(ChatFormatting.GOLD)
-            );
-            final MutableComponent researchEntryTime = Component.literal(RESEARCH_ENTRY_TIME).withStyle(
-                    Style.EMPTY.withBold(true).withColor(ChatFormatting.GOLD)
-            );
-            final double progressToGo = IGlobalResearchTree.getInstance().getBranchData(research.getBranch()).getBaseTime(research.getDepth()) - research.getProgress();
-            final int hours = (int) (progressToGo / (BASE_RESEARCH_TIME * 2));
-            final int increments = (int) Math.ceil(progressToGo % (BASE_RESEARCH_TIME * 2) / (BASE_RESEARCH_TIME / 2d));
-
-            final String timeRemaining;
-            if (increments == 4)
+            context.getSource().sendSuccess(Component.literal(EMPTY_IN_PROGRESS_RESEARCH), true);
+        }
+        else
+        {
+            for (final ILocalResearch research : inProgress)
             {
-                timeRemaining = String.format("%d:%02d", hours + 1, 0);
-            }
-            else
-            {
-                timeRemaining = String.format("%d:%02d", hours, increments * 15);
-            }
+                final MutableComponent researchEntryId = Component.literal(RESEARCH_ENTRY_ID).withStyle(
+                        Style.EMPTY.withBold(true).withColor(ChatFormatting.GOLD)
+                );
+                final MutableComponent researchEntryTime = Component.literal(RESEARCH_ENTRY_TIME).withStyle(
+                        Style.EMPTY.withBold(true).withColor(ChatFormatting.GOLD)
+                );
+                final double progressToGo = IGlobalResearchTree.getInstance().getBranchData(research.getBranch()).getBaseTime(research.getDepth()) - research.getProgress();
+                final int hours = (int) (progressToGo / (BASE_RESEARCH_TIME * 2));
+                final int increments = (int) Math.ceil(progressToGo % (BASE_RESEARCH_TIME * 2) / (BASE_RESEARCH_TIME / 2d));
 
-            // Make an empty parent component to preserve coloring
-            context.getSource().sendSuccess(
-                    Component.literal("")
-                            .append(researchEntryId)
-                            .append(Component.literal(String.format(ID_AND_TIME_TEXT, research.getId().toString(), timeRemaining))),
-                    true);
+                final String timeRemaining;
+                if (increments == 4)
+                {
+                    timeRemaining = String.format("%d:%02d", hours + 1, 0);
+                }
+                else
+                {
+                    timeRemaining = String.format("%d:%02d", hours, increments * 15);
+                }
+
+                // Make an empty parent component to preserve coloring
+                context.getSource().sendSuccess(
+                        Component.literal("")
+                                .append(researchEntryId)
+                                .append(Component.literal(String.format(ID_AND_TIME_TEXT, research.getId().toString(), timeRemaining))),
+                        true);
+            }
         }
     }
 
